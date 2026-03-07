@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'gis.apps.GisConfig',
     'rest_framework',
     'corsheaders',
     'django_extensions',
