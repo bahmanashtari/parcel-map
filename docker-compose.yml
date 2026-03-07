@@ -18,6 +18,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+    networks:
+      - parcelmap-network
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
@@ -30,6 +33,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+networks:
+  parcelmap-network:
+    driver: bridge
 
 volumes:
   postgres_data:
