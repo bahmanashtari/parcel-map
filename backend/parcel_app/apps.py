@@ -1,7 +1,6 @@
 from django.apps import AppConfig
 
 
-class GisConfig(AppConfig):
+class ParcelAppConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'gis'
-    label = 'parcel_gis'
+    name = 'parcel_app'

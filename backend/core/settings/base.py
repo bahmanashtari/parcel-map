@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
-    'gis.apps.GisConfig',
+    'parcel_app.apps.ParcelAppConfig',
     'rest_framework',
     'corsheaders',
     'django_extensions',
