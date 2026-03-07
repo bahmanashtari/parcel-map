@@ -1,1 +1,15 @@
+__pycache__/
+*.py[cod]
 
+# Virtual environments
+venv/
+.venv/
+backend/venv/
+backend/venv_*/
+
+# Logs
+*.log
+backend/logs/*.log
+
+# macOS
+.DS_Store
