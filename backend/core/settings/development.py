@@ -35,13 +35,13 @@ CSRF_COOKIE_SECURE = False
 SECURE_HSTS_SECONDS = 0
 
 # Installed apps - add debug toolbar for development
-INSTALLED_APPS += [
-    'debug_toolbar',
-]
+#INSTALLED_APPS += [
+#    'debug_toolbar',
+#]
 
-MIDDLEWARE += [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-]
+#MIDDLEWARE += [
+#    'debug_toolbar.middleware.DebugToolbarMiddleware',
+#]
 
 INTERNAL_IPS = ['127.0.0.1', 'localhost']
 
