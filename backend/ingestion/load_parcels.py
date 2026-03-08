@@ -1,4 +1,4 @@
-"""Helpers for loading small parcel GeoJSON samples into PostGIS."""
+"""Simple first-pass ingestion for a small Fremont parcel sample."""
 
 from __future__ import annotations
 
@@ -9,87 +9,67 @@ from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
 
 from parcel_app.models import Jurisdiction, Parcel, Source
 
-# Alameda County Parcels FeatureServer query endpoint.
-DEFAULT_PARCEL_QUERY_URL = (
-    "https://services5.arcgis.com/ROBnTHSNjoZ2Wm1P/ArcGIS/rest/services/"
-    "Parcels/FeatureServer/0/query"
+FREMONT_SAMPLE_URL = (
+    "https://services5.arcgis.com/ROBnTHSNjoZ2Wm1P/ArcGIS/rest/services/Parcels/"
+    "FeatureServer/0/query?where=SitusCity%3D%27FREMONT%27&outFields=APN%2C"
+    "SitusAddress%2CSitusCity&returnGeometry=true&outSR=4326&orderByFields="
+    "OBJECTID%20ASC&resultRecordCount=5&f=geojson"
 )
 
 
-def _to_multipolygon(geometry_dict: dict) -> MultiPolygon:
-    """Convert a GeoJSON geometry object to MultiPolygon."""
-    geom = GEOSGeometry(json.dumps(geometry_dict), srid=4326)
+def _parse_geom_as_multipolygon(geometry: dict) -> MultiPolygon:
+    """Parse GeoJSON geometry into a MultiPolygon for the Parcel model."""
+    geom = GEOSGeometry(json.dumps(geometry), srid=4326)
+
     if geom.geom_type == "Polygon":
         return MultiPolygon(geom, srid=4326)
+
     if geom.geom_type == "MultiPolygon":
         return geom
-    raise ValueError(f"Unsupported geometry type: {geom.geom_type}")
+
+    raise ValueError(f"Expected Polygon/MultiPolygon, got {geom.geom_type}")
 
 
-def load_parcel_geojson(filepath_or_url: str | None = None, limit: int = 5) -> int:
-    """Fetch and ingest a small parcel sample into the Parcel model.
-
-    This intentionally focuses on a tiny pilot ingest:
-    - fetch GeoJSON from Alameda County ArcGIS,
-    - map APN + situs address + geometry,
-    - create/update a few Parcel rows for testing.
-
-    Args:
-        filepath_or_url: Optional ArcGIS query URL. If omitted, default pilot
-            query endpoint is used.
-        limit: Maximum number of parcel features to ingest.
-
-    Returns:
-        Number of Parcel records created/updated.
-    """
-    base_url = filepath_or_url or DEFAULT_PARCEL_QUERY_URL
-
-    # 1) Query only Fremont parcels and only fields needed for first ingest.
-    params = {
-        "where": "SitusCity='FREMONT'",
-        "outFields": "APN,SitusAddress,SitusCity",
-        "returnGeometry": "true",
-        "outSR": 4326,
-        "orderByFields": "OBJECTID ASC",
-        "resultRecordCount": max(1, int(limit)),
-        "f": "geojson",
-    }
-    response = requests.get(base_url, params=params, timeout=30)
+def load_parcel_geojson() -> int:
+    """Ingest a small Fremont parcel GeoJSON sample into Parcel."""
+    response = requests.get(FREMONT_SAMPLE_URL, timeout=30)
     response.raise_for_status()
     feature_collection = response.json()
 
-    # 2) Ensure parent records exist for this pilot source.
-    jurisdiction, _ = Jurisdiction.objects.get_or_create(name="Fremont", state="CA")
-    source, _ = Source.objects.get_or_create(
+    if feature_collection.get("type") != "FeatureCollection":
+        raise ValueError("Expected GeoJSON FeatureCollection response.")
+
+    jurisdiction = Jurisdiction.objects.get(name="Fremont")
+    source = Source.objects.get(
         jurisdiction=jurisdiction,
-        name="Alameda County Parcels",
-        defaults={
-            "source_type": "parcel_geojson",
-            "url": response.url,
-        },
+        name="Fremont Parcels GeoJSON",
     )
 
-    # 3) Parse features and write Parcel rows.
-    ingested = 0
-    for feature in feature_collection.get("features", [])[:limit]:
+    created_count = 0
+
+    for feature in feature_collection.get("features", []):
         properties = feature.get("properties", {})
         geometry = feature.get("geometry")
-        apn = (properties.get("APN") or "").strip()
 
-        # Skip rows that cannot be keyed or cannot be mapped.
+        apn = (properties.get("APN") or "").strip()
+        address = properties.get("SitusAddress")
+
         if not apn or not geometry:
             continue
 
-        parcel_geom = _to_multipolygon(geometry)
-        Parcel.objects.update_or_create(
+        if Parcel.objects.filter(source=source, apn=apn).exists():
+            continue
+
+        parcel_geom = _parse_geom_as_multipolygon(geometry)
+
+        Parcel.objects.create(
+            jurisdiction=jurisdiction,
             source=source,
             apn=apn,
-            defaults={
-                "jurisdiction": jurisdiction,
-                "address": properties.get("SitusAddress"),
-                "geom": parcel_geom,
-            },
+            address=address,
+            geom=parcel_geom,
+            source_crs="EPSG:4326",
         )
-        ingested += 1
+        created_count += 1
 
-    return ingested
+    return created_count

@@ -1,11 +1,66 @@
 import { useEffect, useRef } from 'react'
+import type { FeatureCollection } from 'geojson'
 import maplibregl, { type StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
+function collectLngLatPairs(
+  value: unknown,
+  points: Array<[number, number]>,
+): void {
+  if (!Array.isArray(value)) {
+    return
+  }
+
+  // GeoJSON coordinate pair: [lng, lat]
+  if (
+    value.length >= 2 &&
+    typeof value[0] === 'number' &&
+    typeof value[1] === 'number'
+  ) {
+    points.push([value[0], value[1]])
+    return
+  }
+
+  for (const item of value) {
+    collectLngLatPairs(item, points)
+  }
+}
+
+function getFeatureCollectionBounds(geojson: FeatureCollection) {
+  const points: Array<[number, number]> = []
+
+  for (const feature of geojson.features) {
+    if (feature.geometry && 'coordinates' in feature.geometry) {
+      collectLngLatPairs(feature.geometry.coordinates, points)
+    }
+  }
+
+  if (points.length === 0) {
+    return null
+  }
+
+  let minLng = points[0][0]
+  let minLat = points[0][1]
+  let maxLng = points[0][0]
+  let maxLat = points[0][1]
+
+  for (const [lng, lat] of points) {
+    minLng = Math.min(minLng, lng)
+    minLat = Math.min(minLat, lat)
+    maxLng = Math.max(maxLng, lng)
+    maxLat = Math.max(maxLat, lat)
+  }
+
+  return [
+    [minLng, minLat],
+    [maxLng, maxLat],
+  ] as [[number, number], [number, number]]
+}
 
 function App() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
+  const isAutoFittingRef = useRef(false)
 
   useEffect(() => {
     if (!mapContainerRef.current) {
@@ -44,6 +99,12 @@ function App() {
         return
       }
 
+      // Skip the moveend fired by our own fitBounds call.
+      if (isAutoFittingRef.current) {
+        isAutoFittingRef.current = false
+        return
+      }
+
       const map = mapRef.current
       const bounds = mapRef.current.getBounds()
       const west = bounds.getWest()
@@ -57,7 +118,7 @@ function App() {
       const response = await fetch(
         `http://127.0.0.1:8000/api/parcels/?bbox=${bbox}`,
       )
-      const geojson = await response.json()
+      const geojson = (await response.json()) as FeatureCollection
       console.log(geojson)
 
       const source = map.getSource('parcels') as maplibregl.GeoJSONSource | undefined
@@ -93,9 +154,22 @@ function App() {
           },
         })
       }
+
+      // If we received features, zoom the map to their overall extent.
+      const hasFeatures = (geojson.features?.length ?? 0) > 0
+      if (hasFeatures) {
+        const parcelBounds = getFeatureCollectionBounds(geojson)
+        if (parcelBounds) {
+          isAutoFittingRef.current = true
+          map.fitBounds(parcelBounds, { padding: 24 })
+        }
+      }
     }
 
     mapRef.current.on('moveend', onMoveEnd)
+    mapRef.current.once('load', () => {
+      void onMoveEnd()
+    })
 
     return () => {
       mapRef.current?.off('moveend', onMoveEnd)
