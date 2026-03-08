@@ -38,7 +38,66 @@ function App() {
       zoom: 11,
     })
 
+    const onMoveEnd = async () => {
+      if (!mapRef.current) {
+        return
+      }
+
+      const map = mapRef.current
+      const bounds = mapRef.current.getBounds()
+      const west = bounds.getWest()
+      const south = bounds.getSouth()
+      const east = bounds.getEast()
+      const north = bounds.getNorth()
+
+      const bbox = `${west},${south},${east},${north}`
+      console.log(bbox)
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/parcels/?bbox=${bbox}`,
+      )
+      const geojson = await response.json()
+      console.log(geojson)
+
+      const source = map.getSource('parcels') as maplibregl.GeoJSONSource | undefined
+      if (source) {
+        source.setData(geojson)
+      } else {
+        map.addSource('parcels', {
+          type: 'geojson',
+          data: geojson,
+        })
+      }
+
+      if (!map.getLayer('parcels-fill')) {
+        map.addLayer({
+          id: 'parcels-fill',
+          type: 'fill',
+          source: 'parcels',
+          paint: {
+            'fill-color': '#2d6a4f',
+            'fill-opacity': 0.2,
+          },
+        })
+      }
+
+      if (!map.getLayer('parcels-outline')) {
+        map.addLayer({
+          id: 'parcels-outline',
+          type: 'line',
+          source: 'parcels',
+          paint: {
+            'line-color': '#1b4332',
+            'line-width': 1,
+          },
+        })
+      }
+    }
+
+    mapRef.current.on('moveend', onMoveEnd)
+
     return () => {
+      mapRef.current?.off('moveend', onMoveEnd)
       mapRef.current?.remove()
       mapRef.current = null
     }
