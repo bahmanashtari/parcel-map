@@ -4,17 +4,10 @@ from __future__ import annotations
 
 import json
 
-import requests
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
 
+from ingestion.client import AlamedaParcelClient
 from parcel_app.models import Jurisdiction, Parcel, Source
-
-FREMONT_SAMPLE_URL = (
-    "https://services5.arcgis.com/ROBnTHSNjoZ2Wm1P/ArcGIS/rest/services/Parcels/"
-    "FeatureServer/0/query?where=SitusCity%3D%27FREMONT%27&outFields=APN%2C"
-    "SitusAddress%2CSitusCity&returnGeometry=true&outSR=4326&orderByFields="
-    "OBJECTID%20ASC&resultRecordCount=5&f=geojson"
-)
 
 
 def _parse_geom_as_multipolygon(geometry: dict) -> MultiPolygon:
@@ -32,12 +25,9 @@ def _parse_geom_as_multipolygon(geometry: dict) -> MultiPolygon:
 
 def load_parcel_geojson() -> int:
     """Ingest a small Fremont parcel GeoJSON sample into Parcel."""
-    response = requests.get(FREMONT_SAMPLE_URL, timeout=30)
-    response.raise_for_status()
-    feature_collection = response.json()
-
-    if feature_collection.get("type") != "FeatureCollection":
-        raise ValueError("Expected GeoJSON FeatureCollection response.")
+    # Fetching is now delegated to a reusable ArcGIS client.
+    client = AlamedaParcelClient(timeout=30)
+    feature_collection = client.fetch_parcel_page(offset=0, limit=5)
 
     jurisdiction = Jurisdiction.objects.get(name="Fremont")
     source = Source.objects.get(
