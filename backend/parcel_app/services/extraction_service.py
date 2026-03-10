@@ -105,6 +105,18 @@ def _normalize_rule_type(rule_type: str | None) -> str:
     return ExtractedRule.RuleType.OTHER
 
 
+def _normalize_unit(unit: str | None) -> str | None:
+    """Normalize common unit variants for consistent storage."""
+    if unit in (None, ""):
+        return None
+
+    normalized = str(unit).strip().lower()
+    if normalized in {"feet", "foot", "ft"}:
+        return "ft"
+
+    return normalized
+
+
 def run_ollama_rule_extraction(
     document_id: int,
     source_text: str,
@@ -155,7 +167,7 @@ def run_ollama_rule_extraction(
             extraction_run=extraction_run,
             rule_type=_normalize_rule_type(parsed.get("rule_type")),
             value_text=str(parsed.get("value_text", "unknown")),
-            unit=(str(parsed.get("unit")).strip() if parsed.get("unit") not in (None, "") else None),
+            unit=_normalize_unit(parsed.get("unit")),
             applies_to=(
                 str(parsed.get("applies_to")).strip()
                 if parsed.get("applies_to") not in (None, "")
