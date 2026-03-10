@@ -29,7 +29,7 @@ def parcel_bbox(request):
     bbox_polygon = Polygon.from_bbox((west, south, east, north))
     bbox_polygon.srid = 4326
 
-    parcels = parcels = Parcel.objects.filter(
+    parcels = Parcel.objects.filter(
         geom__bboverlaps=bbox_polygon,
         geom__intersects=bbox_polygon,
     )
