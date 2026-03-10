@@ -121,6 +121,7 @@ class ExtractionRun(models.Model):
     started_at = models.DateTimeField()
     completed_at = models.DateTimeField(blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
+    raw_response_text = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.document.title} - {self.extractor_name} ({self.status})"

@@ -183,6 +183,8 @@ def run_ollama_rule_extraction(
 
         response_payload = response.json()
         raw_model_output = str(response_payload.get("response", "")).strip()
+        extraction_run.raw_response_text = raw_model_output or None
+        extraction_run.save(update_fields=["raw_response_text"])
         parsed = _extract_json_object(raw_model_output)
         normalized = _normalize_extracted_rule_data(parsed)
 

@@ -23,9 +23,22 @@ class DocumentAdmin(admin.ModelAdmin):
 
 @admin.register(ExtractionRun)
 class ExtractionRunAdmin(admin.ModelAdmin):
-    list_display = ("document", "extractor_name", "model_name", "status", "started_at", "completed_at")
+    list_display = (
+        "document",
+        "extractor_name",
+        "model_name",
+        "status",
+        "has_raw_response",
+        "started_at",
+        "completed_at",
+    )
     list_filter = ("status", "extractor_name", "model_name")
-    search_fields = ("document__title", "extractor_name", "model_name", "error_message")
+    search_fields = ("document__title", "extractor_name", "model_name", "error_message", "raw_response_text")
+    readonly_fields = ("raw_response_text",)
+
+    @admin.display(boolean=True, description="Raw response")
+    def has_raw_response(self, obj):
+        return bool(obj.raw_response_text)
 
 
 @admin.register(ExtractedRule)
