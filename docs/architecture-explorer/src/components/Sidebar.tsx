@@ -14,6 +14,10 @@ type Props = {
 }
 
 export function Sidebar({ items, activeId, onSelect }: Props) {
+  const implementedCount = items.filter((item) => item.state === 'implemented').length
+  const partialCount = items.filter((item) => item.state === 'partial').length
+  const plannedCount = items.filter((item) => item.state === 'planned').length
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -34,6 +38,22 @@ export function Sidebar({ items, activeId, onSelect }: Props) {
           </button>
         ))}
       </nav>
+
+      <div className="sidebar-footer">
+        <p>Section Status</p>
+        <div className="legend-row">
+          <StatusBadge state="implemented" />
+          <span>{implementedCount}</span>
+        </div>
+        <div className="legend-row">
+          <StatusBadge state="partial" />
+          <span>{partialCount}</span>
+        </div>
+        <div className="legend-row">
+          <StatusBadge state="planned" />
+          <span>{plannedCount}</span>
+        </div>
+      </div>
     </aside>
   )
 }

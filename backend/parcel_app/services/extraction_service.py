@@ -176,6 +176,7 @@ def run_ollama_rule_extraction(
                 "model": model_name,
                 "prompt": prompt,
                 "stream": False,
+                "think": False,
             },
             timeout=120,
         )

@@ -26,10 +26,24 @@ import {
 
 type SectionId = (typeof sections)[number]['id']
 
+const sectionLeads: Record<SectionId, string> = {
+  overview: 'Quick project orientation, scope boundary, and stack reality check.',
+  architecture: 'System lanes and diagrams with explicit built-versus-planned separation.',
+  backend: 'Django structure, live API behavior, and extraction service responsibilities.',
+  frontend: 'Current MapLibre fetch/render loop and immediate UX/engineering limits.',
+  gis: 'Spatial data model, geometry assumptions, and core GIS terms in this repo.',
+  ai: 'Document extraction lane from raw LLM response through normalized rule storage.',
+  flows: 'Step-by-step operational views for ingestion, render, and AI extraction paths.',
+  relationships: 'Folder/module responsibilities and data relationship maps.',
+  status: 'Current delivery status: what is built, partial, and still missing.',
+  glossary: 'Project-specific GIS and AI terms for faster onboarding and relearning.',
+}
+
 function App() {
   const [active, setActive] = useState<SectionId>('overview')
   const [flowTab, setFlowTab] = useState<'ingestion' | 'render' | 'ai'>('ingestion')
   const [diagramTab, setDiagramTab] = useState<'system' | 'flows' | 'models'>('system')
+  const [readingMode, setReadingMode] = useState(false)
 
   const navItems = useMemo(
     () => sections.map((section) => ({ id: section.id, title: section.title, state: section.state })),
@@ -40,16 +54,27 @@ function App() {
     <div className="layout">
       <Sidebar items={navItems} activeId={active} onSelect={(id) => setActive(id as SectionId)} />
 
-      <main className="main-panel">
+      <main className={readingMode ? 'main-panel reading-mode' : 'main-panel'}>
         <header className="main-header">
-          <div>
+          <div className="title-block">
             <p className="eyebrow">Internal Explorer</p>
             <h2>{sections.find((s) => s.id === active)?.title}</h2>
+            <p className="section-lead">{sectionLeads[active]}</p>
           </div>
-          <div className="header-badges">
-            <StatusBadge state="implemented" />
-            <StatusBadge state="partial" />
-            <StatusBadge state="planned" />
+          <div className="header-controls">
+            <button
+              type="button"
+              className={readingMode ? 'mode-toggle active' : 'mode-toggle'}
+              onClick={() => setReadingMode((value) => !value)}
+              aria-pressed={readingMode}
+            >
+              {readingMode ? 'Comfort Reading: On' : 'Comfort Reading: Off'}
+            </button>
+            <div className="header-badges">
+              <StatusBadge state="implemented" />
+              <StatusBadge state="partial" />
+              <StatusBadge state="planned" />
+            </div>
           </div>
         </header>
 
