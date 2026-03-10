@@ -1,8 +1,22 @@
+import re
 from decimal import Decimal
 
 from django.utils import timezone
 
 from parcel_app.models import Document, ExtractedRule, ExtractionRun
+
+
+def _parse_height_limit(source_text: str) -> tuple[str, str | None]:
+    """Extract a height value in feet from source text, with a safe fallback."""
+    match = re.search(
+        r"\bheight\b[^0-9]{0,30}(\d+(?:\.\d+)?)\s*(?:feet|ft)\b",
+        source_text,
+        flags=re.IGNORECASE,
+    )
+    if match:
+        return match.group(1), "ft"
+
+    return "unknown", None
 
 
 def run_manual_rule_extraction(
@@ -24,13 +38,14 @@ def run_manual_rule_extraction(
             status=ExtractionRun.Status.RUNNING,
             started_at=started_at,
         )
+        parsed_value_text, parsed_unit = _parse_height_limit(source_text)
 
         rule = ExtractedRule.objects.create(
             document=document,
             extraction_run=extraction_run,
             rule_type=ExtractedRule.RuleType.HEIGHT_LIMIT,
-            value_text="35",
-            unit="ft",
+            value_text=parsed_value_text,
+            unit=parsed_unit,
             applies_to="sample zone",
             confidence=Decimal("0.95"),
             citation_text=source_text,
