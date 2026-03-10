@@ -93,16 +93,19 @@ def _extract_json_object(text: str) -> dict:
 
 
 def _normalize_rule_type(rule_type: str | None) -> str:
-    """Map arbitrary model output to valid ExtractedRule rule_type choices."""
+    """Normalize rule_type to the currently allowed extraction categories."""
     if not rule_type:
-        return ExtractedRule.RuleType.OTHER
+        return "unknown"
 
-    value = str(rule_type).strip().lower().replace(" ", "_")
-    valid_values = {choice for choice, _ in ExtractedRule.RuleType.choices}
-    if value in valid_values:
-        return value
-
-    return ExtractedRule.RuleType.OTHER
+    normalized = str(rule_type).strip().lower().replace("-", "_").replace(" ", "_")
+    allowed = {
+        "height_limit",
+        "front_setback",
+        "rear_setback",
+        "side_setback",
+        "unknown",
+    }
+    return normalized if normalized in allowed else "unknown"
 
 
 def _normalize_unit(unit: str | None) -> str | None:
@@ -115,6 +118,26 @@ def _normalize_unit(unit: str | None) -> str | None:
         return "ft"
 
     return normalized
+
+
+def _normalize_extracted_rule_data(parsed: dict) -> dict:
+    """Validate and normalize parsed LLM output for ExtractedRule creation."""
+    value_text_raw = parsed.get("value_text")
+    value_text = str(value_text_raw).strip() if value_text_raw is not None else ""
+    if not value_text:
+        value_text = "unknown"
+
+    applies_to_raw = parsed.get("applies_to")
+    applies_to = str(applies_to_raw).strip() if applies_to_raw is not None else ""
+    if not applies_to:
+        applies_to = None
+
+    return {
+        "rule_type": _normalize_rule_type(parsed.get("rule_type")),
+        "value_text": value_text,
+        "unit": _normalize_unit(parsed.get("unit")),
+        "applies_to": applies_to,
+    }
 
 
 def run_ollama_rule_extraction(
@@ -161,18 +184,15 @@ def run_ollama_rule_extraction(
         response_payload = response.json()
         raw_model_output = str(response_payload.get("response", "")).strip()
         parsed = _extract_json_object(raw_model_output)
+        normalized = _normalize_extracted_rule_data(parsed)
 
         rule = ExtractedRule.objects.create(
             document=document,
             extraction_run=extraction_run,
-            rule_type=_normalize_rule_type(parsed.get("rule_type")),
-            value_text=str(parsed.get("value_text", "unknown")),
-            unit=_normalize_unit(parsed.get("unit")),
-            applies_to=(
-                str(parsed.get("applies_to")).strip()
-                if parsed.get("applies_to") not in (None, "")
-                else None
-            ),
+            rule_type=normalized["rule_type"],
+            value_text=normalized["value_text"],
+            unit=normalized["unit"],
+            applies_to=normalized["applies_to"],
             confidence=None,
             citation_text=source_text,
             page_number=page_number,
