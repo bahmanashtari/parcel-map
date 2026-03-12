@@ -35,6 +35,7 @@ Use this as a starting snapshot and re-check each item in code.
 - Document list/create API exists at `/api/documents/`:
   - `GET` newest-first by `created_at` with `jurisdiction_name` and `constraint_count`
   - `POST` supports document creation (`title`, `document_type`, `jurisdiction_id`, optional `source_url`, `file_path`, `source_id`, `status`)
+- Document detail read API exists: `GET /api/documents/<id>/` (includes source/jurisdiction names and `constraint_count`).
 - Document constraint read API exists: `GET /api/documents/<id>/constraints/` (newest-first by `created_at`).
 - Verify exact endpoint surface and route wiring from:
   - `backend/core/urls.py`

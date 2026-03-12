@@ -10,6 +10,7 @@ from rest_framework import status
 from .models import Document, ExtractedConstraint, Parcel
 from .serializers import (
     DocumentCreateSerializer,
+    DocumentDetailSerializer,
     DocumentListSerializer,
     ExtractedConstraintSerializer,
     ParcelSerializer,
@@ -66,6 +67,17 @@ def document_constraints(request, document_id):
 
     constraints = ExtractedConstraint.objects.filter(document_id=document_id).order_by("-created_at")
     serializer = ExtractedConstraintSerializer(constraints, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+def document_detail(request, document_id):
+    document = get_object_or_404(
+        Document.objects.select_related("jurisdiction", "source")
+        .annotate(constraint_count=Count("extracted_constraints")),
+        id=document_id,
+    )
+    serializer = DocumentDetailSerializer(document)
     return Response(serializer.data)
 
 

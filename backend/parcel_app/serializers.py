@@ -48,6 +48,27 @@ class DocumentListSerializer(serializers.ModelSerializer):
         ]
 
 
+class DocumentDetailSerializer(serializers.ModelSerializer):
+    jurisdiction_name = serializers.CharField(source="jurisdiction.name", read_only=True)
+    source_name = serializers.CharField(source="source.name", read_only=True, allow_null=True)
+    constraint_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Document
+        fields = [
+            "id",
+            "title",
+            "document_type",
+            "status",
+            "created_at",
+            "source_url",
+            "file_path",
+            "jurisdiction_name",
+            "source_name",
+            "constraint_count",
+        ]
+
+
 class DocumentCreateSerializer(serializers.ModelSerializer):
     jurisdiction_id = serializers.PrimaryKeyRelatedField(
         source="jurisdiction",
