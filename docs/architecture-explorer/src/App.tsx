@@ -9,6 +9,9 @@ import {
   aiWorkflowFacts,
   backendBehaviors,
   backendStructure,
+  designSystemCards,
+  designSystemGaps,
+  designTokenSnapshot,
   diagrams,
   flowCards,
   folderMap,
@@ -31,6 +34,7 @@ const sectionLeads: Record<SectionId, string> = {
   architecture: 'System lanes and diagrams with explicit built-versus-planned separation.',
   backend: 'Django structure, live API behavior, and extraction service responsibilities.',
   frontend: 'Current MapLibre fetch/render loop and immediate UX/engineering limits.',
+  design: 'Current design systems in both app surfaces and where consistency gaps remain.',
   gis: 'Spatial data model, geometry assumptions, and core GIS terms in this repo.',
   ai: 'Document extraction lane from raw LLM response through normalized rule storage.',
   flows: 'Step-by-step operational views for ingestion, render, and AI extraction paths.',
@@ -41,7 +45,7 @@ const sectionLeads: Record<SectionId, string> = {
 
 function App() {
   const [active, setActive] = useState<SectionId>('overview')
-  const [flowTab, setFlowTab] = useState<'ingestion' | 'render' | 'ai'>('ingestion')
+  const [flowTab, setFlowTab] = useState<'ingestion' | 'render' | 'documents' | 'ai'>('ingestion')
   const [diagramTab, setDiagramTab] = useState<'system' | 'flows' | 'models'>('system')
   const [readingMode, setReadingMode] = useState(false)
 
@@ -49,6 +53,10 @@ function App() {
     () => sections.map((section) => ({ id: section.id, title: section.title, state: section.state })),
     [],
   )
+  const activeIndex = Math.max(0, sections.findIndex((section) => section.id === active))
+  const activeSection = sections[activeIndex]
+  const previousSection = activeIndex > 0 ? sections[activeIndex - 1] : null
+  const nextSection = activeIndex < sections.length - 1 ? sections[activeIndex + 1] : null
 
   return (
     <div className="layout">
@@ -58,8 +66,14 @@ function App() {
         <header className="main-header">
           <div className="title-block">
             <p className="eyebrow">Internal Explorer</p>
-            <h2>{sections.find((s) => s.id === active)?.title}</h2>
+            <h2>{activeSection.title}</h2>
             <p className="section-lead">{sectionLeads[active]}</p>
+            <div className="section-meta">
+              <StatusBadge state={activeSection.state} />
+              <span>
+                Section {activeIndex + 1} of {sections.length}
+              </span>
+            </div>
           </div>
           <div className="header-controls">
             <button
@@ -70,6 +84,24 @@ function App() {
             >
               {readingMode ? 'Comfort Reading: On' : 'Comfort Reading: Off'}
             </button>
+            <div className="header-nav">
+              <button
+                type="button"
+                className="section-jump"
+                onClick={() => previousSection && setActive(previousSection.id as SectionId)}
+                disabled={!previousSection}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="section-jump"
+                onClick={() => nextSection && setActive(nextSection.id as SectionId)}
+                disabled={!nextSection}
+              >
+                Next
+              </button>
+            </div>
             <div className="header-badges">
               <StatusBadge state="implemented" />
               <StatusBadge state="partial" />
@@ -114,6 +146,7 @@ function App() {
                 Explorer content is derived from inspected repository files. Planned labels are pulled from
                 <code> docs/ca_gis_platform_unified_plan.md</code> and kept separate from as-built behavior.
               </p>
+              <p className="muted">Snapshot date: March 12, 2026.</p>
               <div className="chip-row">
                 {sourceTrace.map((path) => (
                   <span key={path} className="path-chip">
@@ -173,6 +206,7 @@ function App() {
                 <div className="diagram-stack">
                   <MermaidDiagram {...diagrams[1]} chart={diagrams[1].mermaid} />
                   <MermaidDiagram {...diagrams[2]} chart={diagrams[2].mermaid} />
+                  <MermaidDiagram {...diagrams[5]} chart={diagrams[5].mermaid} />
                   <MermaidDiagram {...diagrams[3]} chart={diagrams[3].mermaid} />
                 </div>
               ) : null}
@@ -249,6 +283,50 @@ function App() {
               <h3>Frontend Limitations / Next Steps</h3>
               <ul className="tight-list">
                 {frontendLimits.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </article>
+          </section>
+        ) : null}
+
+        {active === 'design' ? (
+          <section className="content-grid">
+            <article className="card">
+              <h3>Application Design Systems</h3>
+              <div className="card-grid three">
+                {designSystemCards.map((card) => (
+                  <article key={card.title} className="mini-card">
+                    <div className="card-title-row">
+                      <h4>{card.title}</h4>
+                      <StatusBadge state={card.state} />
+                    </div>
+                    <ul className="tight-list">
+                      {card.items.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+            </article>
+
+            <article className="card">
+              <h3>Token + Pattern Snapshot</h3>
+              <div className="kv-list">
+                {designTokenSnapshot.map((row) => (
+                  <div key={row.area} className="kv-row">
+                    <span>{row.area}</span>
+                    <strong>{row.value}</strong>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="card tone-warn">
+              <h3>Current Design Gaps</h3>
+              <ul className="tight-list">
+                {designSystemGaps.map((line) => (
                   <li key={line}>{line}</li>
                 ))}
               </ul>
@@ -358,7 +436,7 @@ function App() {
                     key={flow.id}
                     type="button"
                     className={flowTab === flow.id ? 'tab active' : 'tab'}
-                    onClick={() => setFlowTab(flow.id as 'ingestion' | 'render' | 'ai')}
+                    onClick={() => setFlowTab(flow.id as 'ingestion' | 'render' | 'documents' | 'ai')}
                   >
                     {flow.title}
                   </button>
@@ -385,6 +463,7 @@ function App() {
             <div className="diagram-stack">
               <MermaidDiagram {...diagrams[1]} chart={diagrams[1].mermaid} />
               <MermaidDiagram {...diagrams[2]} chart={diagrams[2].mermaid} />
+              <MermaidDiagram {...diagrams[5]} chart={diagrams[5].mermaid} />
               <MermaidDiagram {...diagrams[3]} chart={diagrams[3].mermaid} />
             </div>
           </section>

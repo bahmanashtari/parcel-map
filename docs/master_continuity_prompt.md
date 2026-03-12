@@ -53,6 +53,10 @@ Use this as a starting snapshot and re-check each item in code.
 ### Frontend
 - React + MapLibre map loop exists in `frontend/src/App.tsx`.
 - Current app fetches parcel data by bbox and renders parcel layers.
+- Frontend now includes a small hash-based secondary view (`#documents`) for AI document browsing:
+  - lists documents from `GET /api/documents/`
+  - shows selected document detail from `GET /api/documents/<id>/`
+  - shows selected document constraints from `GET /api/documents/<id>/constraints/`
 - Verify current API URL handling, layer wiring, and map interaction behavior in code (do not rely on this prompt for exact values).
 
 ### AI extraction lane
