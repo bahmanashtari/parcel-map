@@ -214,8 +214,8 @@ function App() {
             <Accordion title="Service Layer Snapshot" subtitle={<StatusBadge state="partial" />} defaultOpen>
               <ul className="tight-list">
                 <li>
-                  <code>parcel_app/services/extraction_service.py</code> contains manual and Ollama extraction
-                  functions.
+                  <code>parcel_app/services/extraction_service.py</code> contains the Ollama-based constraint
+                  extraction function.
                 </li>
                 <li>
                   Extraction runs track status transitions (<code>running</code> → <code>completed/failed</code>) and
@@ -317,7 +317,7 @@ function App() {
               </div>
             </article>
 
-            <Accordion title="Current Manual + LLM Paths" subtitle={<StatusBadge state="partial" />} defaultOpen>
+            <Accordion title="Current LLM Constraint Path" subtitle={<StatusBadge state="partial" />} defaultOpen>
               <ul className="tight-list">
                 {aiWorkflowFacts.map((fact) => (
                   <li key={fact}>{fact}</li>

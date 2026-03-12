@@ -127,7 +127,7 @@ class ExtractionRun(models.Model):
         return f"{self.document.title} - {self.extractor_name} ({self.status})"
 
 
-class ExtractedRule(models.Model):
+class ExtractedConstraint(models.Model):
     class RuleType(models.TextChoices):
         SETBACK = "setback", "Setback"
         HEIGHT_LIMIT = "height_limit", "Height Limit"
@@ -137,12 +137,12 @@ class ExtractedRule(models.Model):
     document = models.ForeignKey(
         Document,
         on_delete=models.CASCADE,
-        related_name="extracted_rules",
+        related_name="extracted_constraints",
     )
     extraction_run = models.ForeignKey(
         ExtractionRun,
         on_delete=models.CASCADE,
-        related_name="extracted_rules",
+        related_name="extracted_constraints",
     )
     rule_type = models.CharField(
         max_length=32,

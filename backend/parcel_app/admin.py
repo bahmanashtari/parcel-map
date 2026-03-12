@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import (
     Document,
-    ExtractedRule,
+    ExtractedConstraint,
     ExtractionRun,
     Jurisdiction,
     Parcel,
@@ -41,8 +41,8 @@ class ExtractionRunAdmin(admin.ModelAdmin):
         return bool(obj.raw_response_text)
 
 
-@admin.register(ExtractedRule)
-class ExtractedRuleAdmin(admin.ModelAdmin):
+@admin.register(ExtractedConstraint)
+class ExtractedConstraintAdmin(admin.ModelAdmin):
     list_display = ("document", "extraction_run", "rule_type", "confidence", "page_number", "created_at")
     list_filter = ("rule_type", "document__jurisdiction")
     search_fields = ("document__title", "value_text", "citation_text", "applies_to")

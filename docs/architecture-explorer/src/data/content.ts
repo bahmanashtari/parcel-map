@@ -82,7 +82,7 @@ export const systemLanes = [
   {
     lane: 'AI extraction lane',
     state: 'partial' as BuildState,
-    now: 'Document/ExtractionRun/ExtractedRule models + manual and Ollama extraction service functions.',
+    now: 'Document/ExtractionRun/ExtractedConstraint models + Ollama extraction service function.',
     next: 'No async workers, no review workflows, and no AI API endpoints wired yet.',
   },
 ]
@@ -99,10 +99,10 @@ export const backendStructure = [
   {
     module: 'backend/parcel_app/',
     responsibilities: [
-      'Core models: Jurisdiction, Source, Parcel, Document, ExtractionRun, ExtractedRule',
+      'Core models: Jurisdiction, Source, Parcel, Document, ExtractionRun, ExtractedConstraint',
       'Parcel bbox endpoint in views.py and serializer for parcel properties',
       'Admin registration for GIS + AI extraction models',
-      'AI extraction service module with manual and Ollama paths',
+      'AI extraction service module with Ollama constraint extraction path',
     ],
   },
   {
@@ -175,14 +175,14 @@ export const aiModels = [
     state: 'implemented' as BuildState,
   },
   {
-    model: 'ExtractedRule',
-    summary: 'Normalized extracted rule row linked to Document and ExtractionRun.',
+    model: 'ExtractedConstraint',
+    summary: 'Normalized extracted constraint row linked to Document and ExtractionRun.',
     state: 'implemented' as BuildState,
   },
 ]
 
 export const aiWorkflowFacts = [
-  'LLM path: run_ollama_rule_extraction(...) sends a parcel-first extraction prompt to /api/generate with timeout=120.',
+  'LLM path: run_ollama_constraint_extraction(...) sends a parcel-first extraction prompt to /api/generate with timeout=120.',
   'Raw model text is stored in ExtractionRun.raw_response_text before JSON normalization/parsing completes.',
   'Normalization maps AI rule labels into current model choices: setback, height_limit, lot_coverage, other.',
   'Dimensional normalization converts feet/meters into canonical ft values.',
@@ -231,8 +231,8 @@ export const flowCards = [
     steps: [
       'Service creates ExtractionRun (running).',
       'Ollama API returns raw response text.',
-      'Service stores raw_response_text, then parses + normalizes rule fields.',
-      'ExtractedRule is created, run is marked completed (or failed on exceptions).',
+      'Service stores raw_response_text, then parses + normalizes constraint fields.',
+      'ExtractedConstraint is created, run is marked completed (or failed on exceptions).',
     ],
   },
 ]
@@ -271,7 +271,7 @@ export const statusBoard = {
     'Viewport-based parcel GeoJSON API endpoint.',
     'MapLibre frontend rendering live parcels by bbox.',
     'Seed ingestion path for Fremont sample records from Alameda ArcGIS.',
-    'Initial AI extraction schema + manual + Ollama service functions.',
+    'Initial AI extraction schema + Ollama service function.',
   ],
   partial: [
     'AI normalization now exists but model choice alignment for new rule categories should be reviewed.',
@@ -308,7 +308,7 @@ export const diagrams: Diagram[] = [
       C --> D[backend/parcel_app bbox API\\nGET /api/parcels/?bbox=...]
       D --> E[frontend/src/App.tsx\\nMapLibre map]
 
-      F[Document + Extraction Services] --> G[(Document / ExtractionRun / ExtractedRule)]
+      F[Document + Extraction Services] --> G[(Document / ExtractionRun / ExtractedConstraint)]
       H[Local Ollama /api/generate] --> F
 
       E -. planned .-> P[Zone Layers + richer map UI]
@@ -356,12 +356,12 @@ export const diagrams: Diagram[] = [
     title: 'AI Extraction Workflow',
     description: 'Current Ollama extraction service behavior.',
     mermaid: `flowchart TD
-      D1[run_ollama_rule_extraction(document_id, source_text,...)] --> D2[Create ExtractionRun status=running]
+      D1[run_ollama_constraint_extraction(document_id, source_text,...)] --> D2[Create ExtractionRun status=running]
       D2 --> D3[POST localhost:11434/api/generate]
       D3 --> D4[Store raw_response_text on ExtractionRun]
       D4 --> D5[Extract JSON object from model response]
       D5 --> D6[Normalize rule_type/value_text/unit/applies_to]
-      D6 --> D7[Create ExtractedRule]
+      D6 --> D7[Create ExtractedConstraint]
       D7 --> D8[Set ExtractionRun status=completed]
       D3 -. exception .-> D9[Set status=failed + error_message]
       D5 -. parse fail .-> D9

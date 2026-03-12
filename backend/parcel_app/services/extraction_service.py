@@ -5,7 +5,7 @@ from typing import Any
 import requests
 from django.utils import timezone
 
-from parcel_app.models import Document, ExtractedRule, ExtractionRun
+from parcel_app.models import Document, ExtractedConstraint, ExtractionRun
 
 
 def _extract_json_object(text: str) -> dict:
@@ -20,19 +20,19 @@ def _extract_json_object(text: str) -> dict:
         return json.loads(match.group(0))
 
 
-def _normalize_rule_type(rule_type: str | None) -> str:
-    """Map model rule output to the current ExtractedRule choices."""
+def _normalize_constraint_type(rule_type: str | None) -> str:
+    """Map model output to the current ExtractedConstraint choices."""
     if not rule_type:
-        return ExtractedRule.RuleType.OTHER
+        return ExtractedConstraint.RuleType.OTHER
 
     normalized = str(rule_type).strip().lower().replace("-", "_").replace(" ", "_")
     if normalized == "height_limit":
-        return ExtractedRule.RuleType.HEIGHT_LIMIT
+        return ExtractedConstraint.RuleType.HEIGHT_LIMIT
     if normalized in {"front_setback", "rear_setback", "side_setback", "setback"}:
-        return ExtractedRule.RuleType.SETBACK
+        return ExtractedConstraint.RuleType.SETBACK
     if normalized == "lot_coverage":
-        return ExtractedRule.RuleType.LOT_COVERAGE
-    return ExtractedRule.RuleType.OTHER
+        return ExtractedConstraint.RuleType.LOT_COVERAGE
+    return ExtractedConstraint.RuleType.OTHER
 
 
 def _normalize_text(value: Any) -> str | None:
@@ -88,8 +88,8 @@ def _format_parcel_hints(parcel_hints: Any) -> str | None:
     return ", ".join(compact_parts)
 
 
-def _normalize_extracted_rule_data(parsed: dict[str, Any]) -> dict[str, str | None]:
-    """Validate and normalize parsed LLM output for ExtractedRule creation."""
+def _normalize_extracted_constraint_data(parsed: dict[str, Any]) -> dict[str, str | None]:
+    """Validate and normalize parsed LLM output for ExtractedConstraint creation."""
     value_text, unit = _normalize_value_and_unit(parsed.get("value_number"), parsed.get("value_unit"))
     applies_parts: list[str] = []
 
@@ -106,20 +106,20 @@ def _normalize_extracted_rule_data(parsed: dict[str, Any]) -> dict[str, str | No
         applies_parts.append(f"parcel_hints: {parcel_hints_summary}")
 
     return {
-        "rule_type": _normalize_rule_type(parsed.get("rule_type")),
+        "rule_type": _normalize_constraint_type(parsed.get("rule_type")),
         "value_text": value_text,
         "unit": unit,
         "applies_to": " | ".join(applies_parts) if applies_parts else None,
     }
 
 
-def run_ollama_rule_extraction(
+def run_ollama_constraint_extraction(
     document_id: int,
     source_text: str,
     page_number: int | None = None,
     model_name: str = "qwen3:30b",
 ) -> dict:
-    """Run one Ollama extraction call and persist a single extracted rule."""
+    """Run one Ollama extraction call and persist a single extracted constraint."""
     extraction_run = None
     raw_model_output = None
 
@@ -169,9 +169,9 @@ def run_ollama_rule_extraction(
         extraction_run.raw_response_text = raw_model_output or None
         extraction_run.save(update_fields=["raw_response_text"])
         parsed = _extract_json_object(raw_model_output)
-        normalized = _normalize_extracted_rule_data(parsed)
+        normalized = _normalize_extracted_constraint_data(parsed)
 
-        rule = ExtractedRule.objects.create(
+        constraint = ExtractedConstraint.objects.create(
             document=document,
             extraction_run=extraction_run,
             rule_type=normalized["rule_type"],
@@ -192,7 +192,7 @@ def run_ollama_rule_extraction(
             "ok": True,
             "document_id": document.id,
             "extraction_run_id": extraction_run.id,
-            "extracted_rule_id": rule.id,
+            "extracted_constraint_id": constraint.id,
         }
     except Exception as exc:
         if extraction_run is not None:
