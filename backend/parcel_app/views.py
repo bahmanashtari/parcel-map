@@ -1,13 +1,14 @@
 import json
 
 from django.contrib.gis.geos import Polygon
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
 from .models import Document, ExtractedConstraint, Parcel
-from .serializers import ExtractedConstraintSerializer, ParcelSerializer
+from .serializers import DocumentListSerializer, ExtractedConstraintSerializer, ParcelSerializer
 
 
 @api_view(["GET"])
@@ -60,4 +61,15 @@ def document_constraints(request, document_id):
 
     constraints = ExtractedConstraint.objects.filter(document_id=document_id).order_by("-created_at")
     serializer = ExtractedConstraintSerializer(constraints, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+def document_list(request):
+    documents = (
+        Document.objects.select_related("jurisdiction")
+        .annotate(constraint_count=Count("extracted_constraints"))
+        .order_by("-created_at")
+    )
+    serializer = DocumentListSerializer(documents, many=True)
     return Response(serializer.data)

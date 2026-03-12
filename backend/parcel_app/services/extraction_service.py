@@ -119,7 +119,7 @@ def run_ollama_constraint_extraction(
     document_id: int,
     source_text: str,
     page_number: int | None = None,
-    model_name: str = "qwen3:30b",
+    model_name: str = "mistral-small3.2",
 ) -> dict:
     """Run one Ollama extraction call and persist a single extracted constraint."""
     extraction_run = None
