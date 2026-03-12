@@ -1,12 +1,13 @@
 import json
 
 from django.contrib.gis.geos import Polygon
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Parcel
-from .serializers import ParcelSerializer
+from .models import Document, ExtractedConstraint, Parcel
+from .serializers import ExtractedConstraintSerializer, ParcelSerializer
 
 
 @api_view(["GET"])
@@ -51,3 +52,12 @@ def parcel_bbox(request):
             "features": features,
         }
     )
+
+
+@api_view(["GET"])
+def document_constraints(request, document_id):
+    get_object_or_404(Document, id=document_id)
+
+    constraints = ExtractedConstraint.objects.filter(document_id=document_id).order_by("-created_at")
+    serializer = ExtractedConstraintSerializer(constraints, many=True)
+    return Response(serializer.data)

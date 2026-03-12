@@ -32,6 +32,7 @@ Use this as a starting snapshot and re-check each item in code.
 
 ### API surface
 - Parcel bbox API exists.
+- Document constraint read API exists: `GET /api/documents/<id>/constraints/` (newest-first by `created_at`).
 - Verify exact endpoint surface and route wiring from:
   - `backend/core/urls.py`
   - `backend/parcel_app/urls.py`
