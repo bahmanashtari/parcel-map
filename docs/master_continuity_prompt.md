@@ -51,8 +51,8 @@ Use this as a starting snapshot and re-check each item in code.
 
 ### AI extraction lane
 - Ollama-based extraction service exists in `backend/parcel_app/services/extraction_service.py`.
-- The service captures raw model output, applies normalization, and persists one extracted rule per run.
-- The current extraction path is narrow and rule-focused; do not assume a general-purpose extraction platform is already implemented.
+- The service captures raw model output, applies normalization, and persists one extracted constraint per run.
+- The current extraction path is narrow and constraint-focused; do not assume a general-purpose extraction platform is already implemented.
 - Verify current prompt content, default model name, timeout, and normalization rules directly in service code.
 - Treat Parcel/PostGIS data as deterministic source truth; AI outputs are derived/audit artifacts.
 
