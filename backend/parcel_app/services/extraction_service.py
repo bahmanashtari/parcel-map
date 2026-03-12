@@ -144,7 +144,7 @@ def run_ollama_rule_extraction(
     document_id: int,
     source_text: str,
     page_number: int | None = None,
-    model_name: str = "qwen3:4b",
+    model_name: str = "qwen3:30b",
 ) -> dict:
     """Run one Ollama extraction call and persist a single extracted rule."""
     extraction_run = None
