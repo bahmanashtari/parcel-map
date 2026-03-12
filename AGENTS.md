@@ -40,7 +40,6 @@ For each implementation step, structure output as:
 - Minimize naming churn; document current names first, then suggest clearer future naming if needed.
 
 ## Quality bar for changes
-- Explain exactly what changed and why.
 - Include validation steps or test evidence.
 - Call out any inconsistencies discovered in docs vs code.
-- Keep commits/review notes short, precise, and implementation-grounded.
+- Provide a well formatted complete github style comment for all changes.
