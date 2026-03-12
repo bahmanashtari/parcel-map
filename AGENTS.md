@@ -12,6 +12,13 @@ Maintain forward progress on `parcel-map` with high technical accuracy, low chur
   - Planned/target (docs-only)
 - Prefer minimal, testable, incremental changes unless explicitly asked for larger refactors.
 
+## Continuity maintenance
+- Treat `docs/master_continuity_prompt.md` as the human-facing continuity file for fresh ChatGPT sessions.
+- When a task changes implemented architecture, data models, APIs, service workflows, naming, project structure, or major decisions, update `docs/master_continuity_prompt.md` in the same change.
+- Do not update it for trivial edits, formatting-only changes, or tiny internal refactors with no effect on project understanding.
+- If code and `docs/master_continuity_prompt.md` conflict, fix the prompt to match the current repo and explicitly note stale sections removed or corrected.
+- In your final report, state whether `docs/master_continuity_prompt.md` was updated and why.
+
 ## Working style (stay up to date)
 For each implementation step, structure output as:
 - Prefer current repo code over older continuity docs when they conflict.
