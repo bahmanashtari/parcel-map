@@ -182,11 +182,10 @@ export const aiModels = [
 ]
 
 export const aiWorkflowFacts = [
-  'Manual path: run_manual_rule_extraction(document_id, source_text, page_number).',
-  'LLM path: run_ollama_rule_extraction(...) sends prompt to /api/generate with timeout=120.',
+  'LLM path: run_ollama_rule_extraction(...) sends a parcel-first extraction prompt to /api/generate with timeout=120.',
   'Raw model text is stored in ExtractionRun.raw_response_text before JSON normalization/parsing completes.',
-  'Normalization currently enforces rule_type into {height_limit, front_setback, rear_setback, side_setback, unknown}.',
-  'Unit normalization maps feet/foot/ft to ft for consistency.',
+  'Normalization maps AI rule labels into current model choices: setback, height_limit, lot_coverage, other.',
+  'Dimensional normalization converts feet/meters into canonical ft values.',
   'Failure path marks run as failed and stores error_message.',
 ]
 
