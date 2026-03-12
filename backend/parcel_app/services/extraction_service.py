@@ -20,19 +20,19 @@ def _extract_json_object(text: str) -> dict:
         return json.loads(match.group(0))
 
 
-def _normalize_constraint_type(rule_type: str | None) -> str:
+def _normalize_constraint_type(constraint_type: str | None) -> str:
     """Map model output to the current ExtractedConstraint choices."""
-    if not rule_type:
-        return ExtractedConstraint.RuleType.OTHER
+    if not constraint_type:
+        return ExtractedConstraint.ConstraintType.OTHER
 
-    normalized = str(rule_type).strip().lower().replace("-", "_").replace(" ", "_")
+    normalized = str(constraint_type).strip().lower().replace("-", "_").replace(" ", "_")
     if normalized == "height_limit":
-        return ExtractedConstraint.RuleType.HEIGHT_LIMIT
+        return ExtractedConstraint.ConstraintType.HEIGHT_LIMIT
     if normalized in {"front_setback", "rear_setback", "side_setback", "setback"}:
-        return ExtractedConstraint.RuleType.SETBACK
+        return ExtractedConstraint.ConstraintType.SETBACK
     if normalized == "lot_coverage":
-        return ExtractedConstraint.RuleType.LOT_COVERAGE
-    return ExtractedConstraint.RuleType.OTHER
+        return ExtractedConstraint.ConstraintType.LOT_COVERAGE
+    return ExtractedConstraint.ConstraintType.OTHER
 
 
 def _normalize_text(value: Any) -> str | None:
@@ -106,7 +106,9 @@ def _normalize_extracted_constraint_data(parsed: dict[str, Any]) -> dict[str, st
         applies_parts.append(f"parcel_hints: {parcel_hints_summary}")
 
     return {
-        "rule_type": _normalize_constraint_type(parsed.get("rule_type")),
+        "constraint_type": _normalize_constraint_type(
+            parsed.get("constraint_type") or parsed.get("rule_type")
+        ),
         "value_text": value_text,
         "unit": unit,
         "applies_to": " | ".join(applies_parts) if applies_parts else None,
@@ -129,7 +131,7 @@ def run_ollama_constraint_extraction(
 
         extraction_run = ExtractionRun.objects.create(
             document=document,
-            extractor_name="ollama_rule_extractor",
+            extractor_name="ollama_constraint_extractor",
             model_name=model_name,
             status=ExtractionRun.Status.RUNNING,
             started_at=started_at,
@@ -140,7 +142,7 @@ def run_ollama_constraint_extraction(
             "Return JSON only. Do not include markdown, code fences, or explanations.\n"
             "Use exactly this JSON shape:\n"
             "{"
-            '"rule_type":"...",'
+            '"constraint_type":"...",'
             '"key_term":"...",'
             '"value_number":0,'
             '"value_unit":"...",'
@@ -174,7 +176,7 @@ def run_ollama_constraint_extraction(
         constraint = ExtractedConstraint.objects.create(
             document=document,
             extraction_run=extraction_run,
-            rule_type=normalized["rule_type"],
+            constraint_type=normalized["constraint_type"],
             value_text=normalized["value_text"],
             unit=normalized["unit"],
             applies_to=normalized["applies_to"],

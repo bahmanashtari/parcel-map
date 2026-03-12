@@ -25,6 +25,7 @@ Use this as a starting snapshot and re-check each item in code.
 - Django + GeoDjango + DRF backend with PostGIS-oriented models under `backend/parcel_app`.
 - Parcel domain is implemented (`Jurisdiction`, `Source`, `Parcel`) with geometry stored as MultiPolygon SRID 4326.
 - Document extraction models exist (`Document`, `ExtractionRun`, `ExtractedConstraint`), including `raw_response_text` on `ExtractionRun`.
+- `ExtractedConstraint` currently uses `constraint_type` (enum class `ConstraintType`) and extractor naming aligned to `ollama_constraint_extractor`.
 - Verify current model defaults and enum choices in:
   - `backend/parcel_app/models.py`
   - `backend/parcel_app/migrations/`

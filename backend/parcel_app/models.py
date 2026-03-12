@@ -128,7 +128,7 @@ class ExtractionRun(models.Model):
 
 
 class ExtractedConstraint(models.Model):
-    class RuleType(models.TextChoices):
+    class ConstraintType(models.TextChoices):
         SETBACK = "setback", "Setback"
         HEIGHT_LIMIT = "height_limit", "Height Limit"
         LOT_COVERAGE = "lot_coverage", "Lot Coverage"
@@ -144,10 +144,10 @@ class ExtractedConstraint(models.Model):
         on_delete=models.CASCADE,
         related_name="extracted_constraints",
     )
-    rule_type = models.CharField(
+    constraint_type = models.CharField(
         max_length=32,
-        choices=RuleType.choices,
-        default=RuleType.OTHER,
+        choices=ConstraintType.choices,
+        default=ConstraintType.OTHER,
     )
     value_text = models.TextField()
     unit = models.CharField(max_length=32, blank=True, null=True)
@@ -158,4 +158,4 @@ class ExtractedConstraint(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.get_rule_type_display()} - {self.document.title}"
+        return f"{self.get_constraint_type_display()} - {self.document.title}"

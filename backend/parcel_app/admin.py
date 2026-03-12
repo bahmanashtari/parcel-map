@@ -43,6 +43,6 @@ class ExtractionRunAdmin(admin.ModelAdmin):
 
 @admin.register(ExtractedConstraint)
 class ExtractedConstraintAdmin(admin.ModelAdmin):
-    list_display = ("document", "extraction_run", "rule_type", "confidence", "page_number", "created_at")
-    list_filter = ("rule_type", "document__jurisdiction")
+    list_display = ("document", "extraction_run", "constraint_type", "confidence", "page_number", "created_at")
+    list_filter = ("constraint_type", "document__jurisdiction")
     search_fields = ("document__title", "value_text", "citation_text", "applies_to")
