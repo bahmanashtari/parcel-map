@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Document, ExtractedConstraint, Parcel
+from .models import Document, ExtractedConstraint, Jurisdiction, Parcel, Source
 
 
 class ParcelSerializer(serializers.ModelSerializer):
@@ -45,4 +45,41 @@ class DocumentListSerializer(serializers.ModelSerializer):
             "created_at",
             "jurisdiction_name",
             "constraint_count",
+        ]
+
+
+class DocumentCreateSerializer(serializers.ModelSerializer):
+    jurisdiction_id = serializers.PrimaryKeyRelatedField(
+        source="jurisdiction",
+        queryset=Jurisdiction.objects.all(),
+        required=True,
+        error_messages={"required": "jurisdiction_id is required."},
+    )
+    source_id = serializers.PrimaryKeyRelatedField(
+        source="source",
+        queryset=Source.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    title = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        error_messages={"required": "title is required.", "blank": "title cannot be blank."},
+    )
+    document_type = serializers.ChoiceField(
+        choices=Document.DocumentType.choices,
+        required=True,
+        error_messages={"required": "document_type is required."},
+    )
+
+    class Meta:
+        model = Document
+        fields = [
+            "title",
+            "document_type",
+            "source_url",
+            "file_path",
+            "jurisdiction_id",
+            "source_id",
+            "status",
         ]

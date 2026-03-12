@@ -8,7 +8,12 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import Document, ExtractedConstraint, Parcel
-from .serializers import DocumentListSerializer, ExtractedConstraintSerializer, ParcelSerializer
+from .serializers import (
+    DocumentCreateSerializer,
+    DocumentListSerializer,
+    ExtractedConstraintSerializer,
+    ParcelSerializer,
+)
 
 
 @api_view(["GET"])
@@ -64,8 +69,21 @@ def document_constraints(request, document_id):
     return Response(serializer.data)
 
 
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 def document_list(request):
+    if request.method == "POST":
+        serializer = DocumentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        document = serializer.save()
+
+        created_document = (
+            Document.objects.select_related("jurisdiction")
+            .annotate(constraint_count=Count("extracted_constraints"))
+            .get(id=document.id)
+        )
+        response_serializer = DocumentListSerializer(created_document)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
     documents = (
         Document.objects.select_related("jurisdiction")
         .annotate(constraint_count=Count("extracted_constraints"))
